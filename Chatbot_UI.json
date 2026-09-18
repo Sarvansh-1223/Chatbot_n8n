@@ -1,0 +1,211 @@
+{
+  "name": "Chatbot UI",
+  "nodes": [
+    {
+      "parameters": {
+        "model": "deepseek/deepseek-chat",
+        "options": {
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -352,
+        192
+      ],
+      "id": "da1ded04-2395-49b4-a308-b3ce8a26d012",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "VRCjHFIs3w6K2sc8",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a helpful AI assistant.\n\nAnswer the user's message directly and naturally.\n\nIf the user's request is unsafe, refuse briefly and explain why.\n\nThe output MUST follow the structured output format provided by the output parser.\n\nThe \"response\" field must contain ONLY the final answer to the user.\n\nRules for \"response\":\n- Keep the answer concise.\n- Normally use 1–3 short sentences.\n- Use simple and clear language.\n- Do not explain your reasoning.\n- Do not describe what you are going to answer.\n- Do not output JSON manually.\n- Do not output safety classifications.\n- Do not add unnecessary information.\n- Return the actual answer, not an analysis of the user's question.\n\nUser message:\n{{ $json.body.message }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a helpful AI assistant.\n\nAnswer the user's message directly and naturally.\n\nKeep responses concise and easy to read.\nNormally answer in 1–3 short sentences.\nDo not provide unnecessary explanations.\nDo not explain your reasoning.\nReturn only the actual answer to the user.\n\nIf the user's request is unsafe, refuse briefly and explain why."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -224,
+        -48
+      ],
+      "id": "4e906d51-65c1-4adf-971f-5d56c98fbcfa",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').item.json.body.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        -128,
+        224
+      ],
+      "id": "d8e2794d-30e2-4c2f-a0e8-cd727797ab7d",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        464,
+        -48
+      ],
+      "id": "c89504d5-6742-4a33-9af6-d14e20f18cb7",
+      "name": "Respond to Webhook",
+      "alwaysOutputData": false,
+      "executeOnce": false,
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chatbot",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -592,
+        -48
+      ],
+      "id": "24c77895-1386-4c9d-80ae-c4a5a17c8738",
+      "name": "Webhook",
+      "webhookId": "e5357507-79cf-4caf-86dc-2b4f92bf476d",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "nGvnD2afZbDPYNz3",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "={\n  \"type\": \"object\",\n  \"properties\": {\n    \"response\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"response\"\n  ],\n  \"additionalProperties\": false\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        64,
+        208
+      ],
+      "id": "52669e25-e642-46b8-89fb-332bf11a792b",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => ({\n  json: {\n    \"output\": {\n      sessionId: $('Webhook').first().json.body.sessionId,\n      response: item.json.output?.response ?? item.json.response\n    }\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        -48
+      ],
+      "id": "6760233d-3e77-48cc-b38e-ab891cac97f9",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "66966eb1-5cef-4c01-8268-96e75f03e62f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "137a369067493a0a1415c0ed4e17916840532e27327b8aafe1a798cbc4b7bc89"
+  },
+  "nodeGroups": [],
+  "id": "BQQzJuUz5aqSWagt",
+  "tags": []
+}
