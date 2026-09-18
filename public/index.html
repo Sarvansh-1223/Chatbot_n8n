@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>n8n Chat</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="chat-container">
+
+        <div class="chat-header">
+            <h2>AI Chat</h2>
+            <span>Powered by n8n</span>
+        </div>
+
+        <div id="chatMessages" class="chat-messages">
+
+            <div class="message bot">
+                Hello! How can I help you?
+            </div>
+
+        </div>
+
+        <div class="chat-input">
+
+            <input type="text" id="messageInput" placeholder="Type your message...">
+
+            <button onclick="sendMessage()">
+                Send
+            </button>
+
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
